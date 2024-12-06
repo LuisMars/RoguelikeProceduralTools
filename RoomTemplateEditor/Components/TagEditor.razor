@@ -1,0 +1,72 @@
+﻿@using MudBlazor
+@using RoomTemplateEditor.Models
+
+<MudStack Spacing="2">
+    <MudText Typo="Typo.h6">Tags</MudText>
+    <MudChipSet T="int?"
+    CheckMark
+    SelectedValue="SelectedTagIndex"
+    SelectedValueChanged="@(t  => SelectedTagIndex = t)"
+    SelectionMode="SelectionMode.SingleSelection"
+    Class="tile-selector">
+        @for(var i = 0; i < Tags.Count; i++)
+        {
+            var _i = i;
+            var t = Tags[_i];
+            <MudChip T="int?"
+            Value="@_i"
+            Color="Color.Default"
+            OnClose="() => RemoveTag(t)"
+            CloseIcon="@Icons.Material.Outlined.Close"
+            Variant="Variant.Outlined"
+            Class="tile-selector-chip">
+                @t
+            </MudChip>
+        }
+    </MudChipSet>
+
+    <MudChip T="string"
+    Icon="@Icons.Material.Outlined.Add"
+    Color="Color.Success"
+    Variant="Variant.Outlined"
+    OnClick="AddTag"
+    Class="mud-chip-margin">
+        Add tag
+    </MudChip>
+
+    @if (SelectedTagIndex is not null)
+    {
+        <MudText Typo="Typo.h6">Edit Tag</MudText>
+        <MudTextField Label="Tag Name"
+        @bind-Value="Tags[SelectedTagIndex ?? 0]"
+        Immediate="true" />
+    }
+</MudStack>
+
+@code {
+    [Parameter]
+    public List<string> Tags { get; set; } = new List<string>();
+
+    private int? SelectedTagIndex { get; set; }
+
+    private void AddTag()
+    {
+        var newTag = $"tag_{Tags.Count + 1}";
+        Tags.Add(newTag);
+        SelectedTagIndex = Tags.Count - 1;
+        TagsChanged.InvokeAsync(Tags);
+    }
+
+    private void RemoveTag(string tag)
+    {
+        if (Tags.Contains(tag))
+        {
+            Tags.Remove(tag);
+            TagsChanged.InvokeAsync(Tags);
+        }
+
+    }
+
+    [Parameter]
+    public EventCallback<List<string>> TagsChanged { get; set; }
+}

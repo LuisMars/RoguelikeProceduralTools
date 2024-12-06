@@ -1,0 +1,192 @@
+﻿@using RoomTemplateEditor.Logic
+@using RoomTemplateEditor.Models
+@using System.Text.Json.Serialization
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<MudStack>
+    <MudText Typo="Typo.h5">Tile Matrix Editor</MudText>
+    <MudStack Style="gap: 2px">
+        @if (Matrix is not null)
+        {
+            @for (int row = 0; row < Matrix.Matrix.GetLength(0); row++)
+            {
+                var row_ = row;
+                <MudStack Row="true" Style="gap: 2px">
+                    @for (int col = 0; col < Matrix.Matrix.GetLength(1); col++)
+                    {
+                        var col_ = col;
+                        <MudItem>
+                            <button class="mud-button-root mud-button mud-button-filled mud-button-filled-surface mud-button-filled-size-medium mud-ripple"
+                                    @onclick="@(args => SetTileType(args, row_, col_))"
+                                    @oncontextmenu="@(args => SetTileType(args, row_, col_))"
+                                    @oncontextmenu:preventDefault="true"
+                                    style="min-width: 0px;padding: 0; aspect-ratio: 1">
+                                @{
+                                    var pattern = Matrix.Matrix[row_, col_];
+                                    var tile = RoomTemplate.TileTypes.FirstOrDefault(t => t.Name == pattern, new());
+                                }
+                                <Tile X="@tile.X" Y="@tile.Y" Zoom="2" />
+                            </button>
+                        </MudItem>
+                    }
+                </MudStack>
+            }
+        }
+    </MudStack>
+
+    <MudDivider />
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Saved Matrices</MudText>
+        <MudChipSet T="MatrixTemplate"
+                    CheckMark
+                    CloseIcon="@Icons.Material.Outlined.Close"
+                    SelectionMode="SelectionMode.SingleSelection"
+                    SelectedValue="Matrix"
+                    SelectedValueChanged="LoadMatrix">
+            @foreach (var savedMatrix in SavedMatrices)
+            {
+                var m = savedMatrix;
+                <MudChip T="MatrixTemplate"
+                         Variant="Variant.Outlined"
+                         OnClick="() => LoadMatrix(m)"
+                         OnClose="() => DeleteMatrix(m)"
+                         Value="@m">
+                    @m.Name
+                </MudChip>
+            }
+        </MudChipSet>
+
+        <MudTextField Label="Matrix Name"
+                      T="string"
+                      Value="@Matrix.Name"
+                      ValueChanged="@(name => UpdateMatrixName(name))"
+                      Immediate="true" />
+        <MudButtonGroup Variant="Variant.Outlined">
+            <MudButton StartIcon="@Icons.Material.Outlined.Refresh" Variant="Variant.Outlined" Color="Color.Default" OnClick="() => LoadMatrix(Matrix)">Reset</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.PlayArrow" Variant="Variant.Outlined" Color="Color.Default" OnClick="ApplyRule">Apply Rule</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.PlayCircleOutline" Variant="Variant.Outlined" Color="Color.Default" OnClick="ApplyRules">Apply All Rules</MudButton>
+        </MudButtonGroup>
+        <MudButtonGroup Variant="Variant.Outlined">
+            <MudButton StartIcon="@Icons.Material.Outlined.ContentCopy" Variant="Variant.Outlined" Color="Color.Default" OnClick="Duplicate">Duplicate</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" Color="Color.Default" OnClick="AddNew">Add new</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.Save" Variant="Variant.Outlined" Color="Color.Success" OnClick="SaveCurrentMatrix">Save</MudButton>
+        </MudButtonGroup>
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter]
+    public RoomTemplate RoomTemplate { get; set; }
+
+    public MatrixTemplate Matrix { get; set; } = new() { Name = "New Room", Matrix = new string[12, 12] };
+
+    public List<MatrixTemplate> SavedMatrices { get; set; } = [];
+
+    [Parameter]
+    public TileType SelectedTileType { get; set; }
+
+    [Parameter]
+    public EventCallback<TileType> SelectedTileTypeChanged { get; set; }
+
+    [Parameter]
+    public Rule CurrentRule { get; set; }
+
+    [Parameter]
+    public List<Rule> AllRules { get; set; }
+
+    [Parameter]
+    public EventCallback<Rule> CurrentRuleChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var savedMatrices = await LocalStorage.GetItemAsync<List<MatrixTemplate>>("Matrices");
+        SavedMatrices = savedMatrices ?? [];
+    }
+
+    private async Task<bool> SetTileType(MouseEventArgs args, int row, int col)
+    {
+        if (args.Button == 0)
+        {
+            if (SelectedTileType is not null)
+            {
+                Matrix.Matrix[row, col] = SelectedTileType.Name;
+            }
+        }
+        else
+        {
+            var tileName = Matrix.Matrix[row, col];
+            var tile = RoomTemplate.TileTypes.FirstOrDefault(t => t.Name == tileName);
+            SelectedTileType = tile;
+            await SelectedTileTypeChanged.InvokeAsync(SelectedTileType);
+        }
+        return false;
+    }
+
+    private void ApplyRules()
+    {
+        Matrix = new MatrixTemplate
+            {
+                Name = Matrix.Name,
+                Matrix = RuleReplacer.ApplyRules(Matrix, AllRules)
+            };
+    }
+
+    private void ApplyRule()
+    {
+        Matrix = new MatrixTemplate
+            {
+                Name = Matrix.Name,
+                Matrix = RuleReplacer.ApplyRule(Matrix, CurrentRule)
+            };
+    }
+
+    private async Task AddNew()
+    {
+        var newMatrix = new MatrixTemplate() { Name = "New Room", Matrix = new string[12, 12] };
+        SavedMatrices.Add(newMatrix);
+        await LocalStorage.SetItemAsync("Matrices", SavedMatrices);
+    }
+
+    private async Task Duplicate()
+    {
+        var newMatrix = new MatrixTemplate() { Name = $"Copy of {Matrix.Name}", Matrix = (string[,])Matrix.Matrix.Clone() };
+        SavedMatrices.Add(newMatrix);
+        await LocalStorage.SetItemAsync("Matrices", SavedMatrices);
+    }
+
+    private async Task SaveCurrentMatrix()
+    {
+        var saved = SavedMatrices.FirstOrDefault(s => s.Name == Matrix.Name);
+        if (saved is not null)
+        {
+            saved.Matrix = Matrix.Matrix;
+        }
+        await LocalStorage.SetItemAsync("Matrices", SavedMatrices);
+    }
+
+    private void LoadMatrix(MatrixTemplate matrix)
+    {
+        var exiting = SavedMatrices.FirstOrDefault(m => m.Name == matrix.Name);
+        Matrix = new MatrixTemplate
+            {
+                Name = matrix.Name,
+                Matrix = (string[,])exiting.Matrix.Clone()
+            };
+    }
+
+    private async Task DeleteMatrix(MatrixTemplate savedMatrix)
+    {
+        SavedMatrices.Remove(savedMatrix);
+        if (Matrix == savedMatrix)
+        {
+            Matrix = SavedMatrices.FirstOrDefault() ?? new() { Name = "New Room", Matrix = new string[12, 12] };
+        }
+        await LocalStorage.SetItemAsync("Matrices", SavedMatrices);
+    }
+
+    private async Task UpdateMatrixName(string name)
+    {
+        Matrix.Name = name;
+        await LocalStorage.SetItemAsync("Matrices", SavedMatrices);
+    }
+}

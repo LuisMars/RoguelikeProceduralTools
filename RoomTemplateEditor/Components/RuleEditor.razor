@@ -1,0 +1,82 @@
+﻿@using RoomTemplateEditor.Models
+@using MudBlazor
+
+@if (CurrentRule is not null)
+{
+    <MudStack Row="true" StretchItems="StretchItems.Start">
+        <MudStack>
+            <MudStack Row="true">
+                <MudTextField Label="Name" T="string" @bind-Value="CurrentRule.Name" />
+                <MudNumericField Label="Priority" @bind-Value="CurrentRule.Priority" T="int" />
+                <MudNumericField Label="Grid Rows" Value="CurrentRule.Rows" T="int" ValueChanged="@(e => UpdateMatrixSize("rows", e))" />
+                <MudNumericField Label="Grid Columns" Value="CurrentRule.Columns" T="int" ValueChanged="@(e => UpdateMatrixSize("cols", e))" />
+            </MudStack>
+
+            <MudStack Row="true">
+                <MudCheckBox @bind-Value="CurrentRule.AllowRotation" Label="Allow Rotation"
+                             Color="Color.Success"
+                             UncheckedColor="Color.Default" />
+                <MudCheckBox @bind-Value="CurrentRule.AllowVerticalMirroring" Label="Allow Vertical Mirroring"
+                             Color="Color.Success"
+                             UncheckedColor="Color.Default" />
+                <MudCheckBox @bind-Value="CurrentRule.AllowHorizontalMirroring" Label="Allow Horizontal Mirroring"
+                             Color="Color.Success"
+                             UncheckedColor="Color.Default" />
+            </MudStack>
+
+            <MudStack>
+                <MudChipSet SelectionMode="SelectionMode.MultiSelection" T="string" CheckMark SelectedValues="CurrentRule.Tags" SelectedValuesChanged="SelectedValuesChanged">
+                    @foreach (var value in Tags)
+                    {
+                        <MudChip Text="@value"></MudChip>
+                    }
+                </MudChipSet>
+            </MudStack>
+        </MudStack>
+    </MudStack>
+}
+else
+{
+    <MudText>No rule selected.</MudText>
+}
+
+@code
+{
+    [Parameter]
+    public Rule CurrentRule { get; set; }
+
+    [Parameter]
+    public EventCallback<Rule> CurrentRuleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnMatrixSizeChanged { get; set; }
+
+    [Parameter]
+    public List<string> Tags { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<List<string>> TagsChanged { get; set; }
+
+    private void UpdateMatrixSize(string dimension, int newSize)
+    {
+        if (dimension == "rows")
+        {
+            CurrentRule.Rows = newSize;
+        }
+        else if (dimension == "cols")
+        {
+            CurrentRule.Columns = newSize;
+        }
+        OnMatrixSizeChanged.InvokeAsync(null);
+    }
+
+    private void RemoveTag(string tag)
+    {
+        CurrentRule.Tags.Remove(tag);
+    }
+
+    private void SelectedValuesChanged(IReadOnlyCollection<string> tags)
+    {
+        CurrentRule.Tags = tags.ToList();
+    }
+}

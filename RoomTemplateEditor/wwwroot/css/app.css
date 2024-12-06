@@ -1,0 +1,31 @@
+.tile-selector {
+    display: flex;
+    flex-direction: column;
+}
+.tile-selector-chip
+{
+    display: flex;
+}
+.tile-selector-chip .mud-chip-content {
+    padding-inline: 8px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.tile {
+    width: 16px;
+    height: 16px;
+    background-image: url('/tiles.png');
+    display: inline-block;
+    background-size: auto;
+    transform-origin: top left;
+    transform: scale(var(--tile-zoom, 1));
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.mermaid > svg {
+    max-width: 100% !important;
+    width: 50svmin;
+}

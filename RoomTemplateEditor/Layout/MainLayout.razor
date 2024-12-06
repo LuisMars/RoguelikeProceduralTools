@@ -1,0 +1,16 @@
+﻿@inherits LayoutComponentBase
+<MudThemeProvider IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar>
+        <MudButton Href="/rules">Rule replacement</MudButton>
+        <MudButton Href="/cycles">Cyclic dungeon</MudButton>
+    </MudAppBar>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>

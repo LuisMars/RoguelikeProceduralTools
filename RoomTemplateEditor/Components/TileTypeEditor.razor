@@ -1,0 +1,130 @@
+﻿@using MudBlazor
+@using RoomTemplateEditor.Models
+
+<MudText Typo="Typo.h6">Tile Types</MudText>
+<MudChipSet T="TileType"
+            CheckMark
+            SelectedValue="SelectedTileType"
+            SelectedValueChanged="OnSelectedTileChanged"
+            SelectionMode="SelectionMode.SingleSelection"
+            Class="tile-selector">
+    @foreach (var tileType in TileTypes)
+    {
+        var t = tileType;
+        <MudChip T="TileType"
+                 Value="@t"
+                 Color="Color.Default"
+                 OnClose="() => RemoveTileType(tileType)"
+                 CloseIcon="@Icons.Material.Outlined.Close"
+                 Variant="Variant.Outlined"
+                 Class="tile-selector-chip">
+            <Tile X="@tileType.X" Y="@tileType.Y" />
+
+            @tileType.Name
+        </MudChip>
+    }
+</MudChipSet>
+
+<MudChip T="string"
+         Icon="@Icons.Material.Outlined.Add"
+         Color="Color.Success"
+         Variant="Variant.Outlined"
+         OnClick="AddTileType"
+         Class="mud-chip-margin">
+    Add tile type
+</MudChip>
+
+@if (SelectedTileType is not null)
+{
+    <MudText Typo="Typo.h6">Edit Selected Tile</MudText>
+    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+        <Tile X="@SelectedTileType.X" Y="@SelectedTileType.Y" Zoom="8" />
+        <MudTextField Label="Tile Name"
+                      Value="SelectedTileType.Name"
+                      T="string"
+                      ValueChanged="OnTileNameChanged"
+                      Immediate="true" />
+        <MudNumericField Label="X Coordinate"
+                         Value="SelectedTileType.X"
+                         ValueChanged="OnTileXChanged"
+                         Immediate="true"
+                         T="int" />
+        <MudNumericField Label="Y Coordinate"
+                         Value="SelectedTileType.Y"
+                         ValueChanged="OnTileYChanged"
+                         Immediate="true"
+                         T="int" />
+    </MudStack>
+}
+
+
+@code {
+    [Parameter]
+    public List<TileType> TileTypes { get; set; } = new List<TileType>();
+
+    [Parameter]
+    public TileType SelectedTileType { get; set; }
+
+    [Parameter]
+    public EventCallback<TileType> SelectedTileTypeChanged { get; set; }
+
+    private void AddTileType()
+    {
+        var newTileName = new TileType
+            {
+                Name = $"tile_{TileTypes.Count + 1}",
+                X = 1,
+                Y = 1
+            };
+        TileTypes.Add(newTileName);
+        SelectedTileType = newTileName;
+    }
+
+    private void RemoveTileType(TileType tileType)
+    {
+        if (TileTypes.Contains(tileType))
+        {
+            TileTypes.Remove(tileType);
+
+            // If the removed tile was selected, reset the selection
+            if (SelectedTileType == tileType)
+            {
+                SelectedTileType = TileTypes.FirstOrDefault();
+                // Notify the parent component about the change
+            }
+        }
+    }
+
+    private void SaveTileEditor()
+    {
+        // Notify parent of changes (optional, if needed)
+        if (SelectedTileTypeChanged.HasDelegate)
+        {
+            SelectedTileTypeChanged.InvokeAsync(SelectedTileType);
+        }
+    }
+
+    private void OnSelectedTileChanged(TileType newSelection)
+    {
+        var old = SelectedTileType;
+        SelectedTileType = newSelection;
+        SaveTileEditor();
+    }
+
+    private void OnTileNameChanged(string name)
+    {
+        SelectedTileType.Name = name;
+        SaveTileEditor();
+    }
+
+    private void OnTileXChanged(int x)
+    {
+        SelectedTileType.X = x;
+        SaveTileEditor();
+    }
+    private void OnTileYChanged(int y)
+    {
+        SelectedTileType.Y = y;
+        SaveTileEditor();
+    }
+}

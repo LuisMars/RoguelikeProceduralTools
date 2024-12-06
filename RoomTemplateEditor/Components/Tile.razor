@@ -1,0 +1,21 @@
+﻿@using RoomTemplateEditor.Models
+
+<div style="display: flex; width: @Size; aspect-ratio: 1;">
+    <div class="tile"
+    style="--tile-zoom: @Zoom; background-position: @BackgroundPosition;"></div>
+</div>
+
+@code {
+    [Parameter]
+    public int X { get; set; } // X Coordinate in the tilesheet
+
+    [Parameter]
+    public int Y { get; set; } // Y Coordinate in the tilesheet
+
+    [Parameter]
+    public int Zoom { get; set; } = 1; // Zoom level (default is 1)
+
+    private string BackgroundPosition => $"{-X * 16}px {-Y * 16}px";
+
+    private string Size => $"{16 * Zoom}px";
+}

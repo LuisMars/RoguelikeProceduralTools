@@ -1,0 +1,64 @@
+﻿@using RoomTemplateEditor.Models
+@using MudBlazor
+
+<MudStack>
+    <MudText Typo="Typo.h6">Rules</MudText>
+    <MudStack Row="true" AlignItems="AlignItems.End">
+        <MudSelect T="Rule" Label="Select Rule" Text="@(CurrentRule?.Name ?? "")" Value="CurrentRule" ValueChanged="OnCurrentRuleChanged">
+            @foreach (var rule in Rules.OrderByDescending(r => r.Priority))
+            {
+                var r = rule;
+                <MudSelectItem Value="@r">@r.Name (@r.Priority)</MudSelectItem>
+            }
+        </MudSelect>
+        <MudStack Row="true">
+            <MudIconButton Size="Size.Small" OnClick="AddRule" Icon="@Icons.Material.Outlined.Add" Variant="Variant.Outlined" Color="Color.Default" />
+            @if (CurrentRule is not null)
+            {
+                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.ContentCopy" OnClick="DuplicateRule" Color="Color.Default" />
+                <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Outlined.Delete" OnClick="DeleteRule" Color="Color.Error" IconColor="Color.Error" />
+            }
+        </MudStack>
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter]
+    public List<Rule> Rules { get; set; }
+
+    [Parameter]
+    public Rule CurrentRule { get; set; }
+
+    [Parameter]
+    public EventCallback<Rule> CurrentRuleChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnAddRule { get; set; }
+
+    [Parameter]
+    public EventCallback OnDuplicateRule { get; set; }
+
+    [Parameter]
+    public EventCallback OnDeleteRule { get; set; }
+
+    private void AddRule()
+    {
+        OnAddRule.InvokeAsync(null);
+    }
+
+    private async Task OnCurrentRuleChanged(Rule newRule)
+    {
+        CurrentRule = newRule;
+        await CurrentRuleChanged.InvokeAsync(CurrentRule);
+    }
+
+    private void DuplicateRule()
+    {
+        OnDuplicateRule.InvokeAsync(null);
+    }
+
+    private void DeleteRule()
+    {
+        OnDeleteRule.InvokeAsync(null);
+    }
+}

@@ -1,0 +1,214 @@
+﻿@page "/rules"
+@using RoomTemplateEditor.Components
+@using RoomTemplateEditor.Models
+@using MudBlazor
+@using System.Text.Json
+
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+<MudMainContent>
+    <MudStack Row="true" Justify="Justify.Center" Spacing="10">
+        <MudStack Spacing="2">
+            <TileTypeEditor TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
+        </MudStack>
+        <TagEditor @bind-Tags="@RoomTemplate.Tags" />
+        <MudStack>
+            <MudButtonGroup Variant="Variant.Outlined">
+                <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
+                <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
+                <!-- Load Template Button -->
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                    <ActivatorContent>
+                        <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
+                            Load
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
+            </MudButtonGroup>
+            <MudTextField @bind-Value="RoomTemplate.TemplateName" Label="Template Name" />
+            <!-- RuleList Component -->
+            <RuleList Rules="RoomTemplate.Rules" CurrentRule="CurrentRule" CurrentRuleChanged="OnCurrentRuleChanged" OnAddRule="AddRule" OnDuplicateRule="Duplicate" OnDeleteRule="DeleteRule" />
+
+            <!-- RuleEditor Component -->
+            <RuleEditor @bind-Tags="@RoomTemplate.Tags" @bind-CurrentRule="CurrentRule" OnMatrixSizeChanged="UpdateMatrixSize" />
+            @if (CurrentRule is not null)
+            {
+                <MudStack Row="true" Justify="Justify.SpaceAround">
+                    <!-- PatternMatrix Component -->
+                    <PatternMatrix Matrix="CurrentRule.Pattern" Title="Pattern" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
+
+                    <!-- ReplacementMatrix Component -->
+                    <PatternMatrix Matrix="CurrentRule.Replacement" Title="Replacement" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
+                </MudStack>
+            }
+            <RuleTester RoomTemplate="@RoomTemplate" @bind-SelectedTileType="@SelectedTileType" @bind-CurrentRule="CurrentRule" AllRules="RoomTemplate.Rules" />
+        </MudStack>
+    </MudStack>
+
+</MudMainContent>
+
+<MudFab Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Style="position: fixed; bottom: 16px; right: 16px;" OnClick="AddRule" />
+
+@code {
+
+    private TileType SelectedTileType { get; set; } = new TileType { Name = "any" };
+
+    private RoomTemplate RoomTemplate { get; set; } = new RoomTemplate
+        {
+            TemplateName = "Room Template",
+            Rules = new List<Rule>(),
+            TileTypes = new List<TileType>
+            {
+                new TileType { Name = "any" },
+                new TileType { Name = "wall", X = 10, Y = 17 },
+                new TileType { Name = "floor", X = 5, Y = 0 },
+                new TileType { Name = "door", X = 0, Y = 9 },
+                new TileType { Name = "key", X = 32, Y = 11 },
+                new TileType { Name = "fence", X = 0, Y = 3 },
+                new TileType { Name = "decoration", X = 4, Y = 7 },
+                new TileType { Name = "trap", X = 31, Y = 12 },
+            }
+        };
+
+    private Rule CurrentRule { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var roomTemplate = await LocalStorage.GetItemAsync<RoomTemplate>("MainData");
+        RoomTemplate = roomTemplate ?? RoomTemplate;
+    }
+
+    private void AddRule()
+    {
+        var rows = CurrentRule?.Rows ?? 3;
+        var cols = CurrentRule?.Columns ?? 3;
+        var newRule = new Rule
+            {
+                Name = $"Rule {RoomTemplate.Rules.Count + 1}",
+                Rows = rows,
+                Columns = cols,
+                Pattern = GenerateEmptyMatrix(rows, cols),
+                Replacement = GenerateEmptyMatrix(rows, cols)
+            };
+        RoomTemplate.Rules.Add(newRule);
+        CurrentRule = newRule;
+    }
+
+    private void Duplicate()
+    {
+        if (CurrentRule is null)
+        {
+            return;
+        }
+        var duplicatedRule = CurrentRule with { Name = $"{CurrentRule.Name} (Copy)" };
+        RoomTemplate.Rules.Add(duplicatedRule);
+        CurrentRule = duplicatedRule;
+    }
+
+    private void DeleteRule()
+    {
+        if (CurrentRule != null)
+        {
+            RoomTemplate.Rules.Remove(CurrentRule);
+            CurrentRule = RoomTemplate.Rules.FirstOrDefault();
+        }
+    }
+
+    private void OnCurrentRuleChanged(Rule rule)
+    {
+        CurrentRule = rule;
+    }
+
+    private void UpdateMatrixSize()
+    {
+        if (CurrentRule != null)
+        {
+            CurrentRule.Pattern = ResizeMatrix(CurrentRule.Pattern, CurrentRule.Rows, CurrentRule.Columns);
+            CurrentRule.Replacement = ResizeMatrix(CurrentRule.Replacement, CurrentRule.Rows, CurrentRule.Columns);
+        }
+    }
+
+    private string[,] ResizeMatrix(string[,] originalMatrix, int newRows, int newColumns)
+    {
+        var resizedMatrix = new string[newRows, newColumns];
+
+        for (int i = 0; i < newRows; i++)
+        {
+            for (int j = 0; j < newColumns; j++)
+            {
+                if (i < originalMatrix.GetLength(0) && j < originalMatrix.GetLength(1))
+                {
+                    // Preserve the original value if within bounds of the old matrix
+                    resizedMatrix[i, j] = originalMatrix[i, j];
+                }
+                else
+                {
+                    // Fill new cells with "any"
+                    resizedMatrix[i, j] = "any";
+                }
+            }
+        }
+
+        return resizedMatrix;
+    }
+
+    private string[,] GenerateEmptyMatrix(int rows, int columns)
+    {
+        var matrix = new string[rows, columns];
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < columns; j++)
+            {
+                matrix[i, j] = "any";
+            }
+        }
+        return matrix;
+    }
+
+    private async Task SaveTemplate()
+    {
+        await LocalStorage.SetItemAsync("MainData", RoomTemplate);
+    }
+
+    private async Task DownloadTemplate()
+    {
+        var json = JsonSerializer.Serialize(RoomTemplate, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        var fileName = $"{RoomTemplate.TemplateName}.json";
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "application/json", json);
+    }
+
+    private async Task PreviewTemplate()
+    {
+        var json = JsonSerializer.Serialize(RoomTemplate, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true,
+            };
+
+        var dialog = DialogService.ShowMessageBox("Preview Template", (MarkupString)$"<pre style=\"font-family: monospace\">{json}</pre>", "Copy to clipboard", "Cancel");
+
+        var result = (await dialog) ?? false;
+        if (result)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+        }
+    }
+
+    private async Task UploadFiles(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream();
+        using var streamReader = new StreamReader(stream);
+        RoomTemplate = JsonSerializer.Deserialize<RoomTemplate>(await streamReader.ReadToEndAsync());
+    }
+}

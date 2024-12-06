@@ -1,0 +1,90 @@
+﻿@using RoomTemplateEditor.Models
+@using MudBlazor
+
+<MudStack>
+    <MudText Typo="Typo.h5">@Title</MudText>
+    <MudStack Spacing="1">
+        @if (Matrix is not null)
+        {
+            @for (int row = 0; row < Matrix.GetLength(0); row++)
+            {
+                var row_ = row;
+                <MudGrid Spacing="1">
+                    @for (int col = 0; col < Matrix.GetLength(1); col++)
+                    {
+                        var col_ = col;
+                        <MudItem>
+                            <button class="mud-button-root mud-button mud-button-filled mud-button-filled-surface mud-button-filled-size-medium mud-ripple"
+                                    @onclick="@(args => SetTileType(args, row_, col_))"
+                                    @oncontextmenu="@(args => SetTileType(args, row_, col_))"
+                                    @oncontextmenu:preventDefault="true"
+                                    style="min-width: 0; width: 64px; padding: 0; aspect-ratio: 1">
+                                @{
+                                    var pattern = Matrix[row_, col_];
+                                    var tile = TileTypes.FirstOrDefault(t => t.Name == pattern, new());
+                                }
+                                <Tile X="@tile.X" Y="@tile.Y" Zoom="4" />
+                            </button>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        }
+        else
+        {
+            <MudText>No rule selected.</MudText>
+        }
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+
+    [Parameter]
+    public string[,] Matrix { get; set; }
+
+    [Parameter]
+    public List<TileType> TileTypes { get; set; }
+
+    [Parameter]
+    public TileType SelectedTileType { get; set; }
+
+    [Parameter]
+    public EventCallback<TileType> SelectedTileTypeChanged { get; set; }
+
+    private async Task<bool> SetTileType(MouseEventArgs args, int row, int col)
+    {
+        if (args.Button == 0)
+        {
+            if (SelectedTileType is not null)
+            {
+                Matrix[row, col] = SelectedTileType.Name;
+            }
+        }
+        else
+        {
+            var tileName = Matrix[row, col];
+            var tile = TileTypes.FirstOrDefault(t => t.Name == tileName);
+            SelectedTileType = tile;
+            await SelectedTileTypeChanged.InvokeAsync(SelectedTileType);
+        }
+        return false;
+    }
+
+    private Color GetButtonColor(string tileType)
+    {
+        if (tileType == SelectedTileType.Name)
+        {
+            return Color.Primary;
+        }
+        else if (tileType == "any")
+        {
+            return Color.Dark;
+        }
+        else
+        {
+            return Color.Surface;
+        }
+    }
+}

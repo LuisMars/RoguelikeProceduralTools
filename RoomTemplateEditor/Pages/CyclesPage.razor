@@ -1,0 +1,431 @@
+﻿@page "/cycles"
+@using MermaidDotNet
+@using MermaidDotNet.Models
+@using RoomTemplateEditor.Models
+@using System.Text.Json
+
+@inject IDialogService DialogService
+@inject IJSRuntime JSRuntime
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<MudMainContent>
+    <MudStack Row="true" Justify="Justify.Center" Spacing="10">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Cycles</MudText>
+            <MudChipSet T="Cycle"
+                        CheckMark
+                        SelectedValue="CurrentCycle"
+                        SelectedValueChanged="OnSelectedCycleChanged"
+                        SelectionMode="SelectionMode.SingleSelection"
+                        Class="tile-selector">
+                @foreach (var cycle in Cycles)
+                {
+                    var c = cycle;
+                    <MudChip T="Cycle"
+                             Value="@c"
+                             Text="@c.Name"
+                             Color="Color.Default"
+                             OnClose="() => RemoveCycle(c)"
+                             CloseIcon="@Icons.Material.Outlined.Close"
+                             Variant="Variant.Outlined"
+                             Class="tile-selector-chip">
+                        @cycle.Name
+                    </MudChip>
+                }
+            </MudChipSet>
+
+            <MudChip T="string"
+                     Icon="@Icons.Material.Outlined.Add"
+                     Color="Color.Success"
+                     Variant="Variant.Outlined"
+                     OnClick="AddCycle"
+                     Class="mud-chip-margin">
+                Add cycle
+            </MudChip>
+            @if (CurrentCycle is not null)
+            {
+                <MudTextField Label="Cycle Name" @bind-Value="@CurrentCycle.Name" />
+            }
+        </MudStack>
+
+        <MudStack>
+            <MudText Typo="Typo.h6">Active Cycle</MudText>
+            @if (CurrentCycle is not null)
+            {
+                <MudText Typo="Typo.h6">Nodes</MudText>
+                <MudChipSet T="CycleNode"
+                            CheckMark
+                            SelectedValue="CurrentNode"
+                            SelectedValueChanged="OnSelectedCycleNodeChanged"
+                            SelectionMode="SelectionMode.SingleSelection"
+                            Class="tile-selector">
+                    @foreach (var cycle in CurrentCycle.Nodes)
+                    {
+                        var c = cycle;
+                        <MudChip T="CycleNode"
+                                 Value="@c"
+                                 Text="@c.Name"
+                                 Color="Color.Default"
+                                 OnClose="() => RemoveCycleNode(c)"
+                                 CloseIcon="@Icons.Material.Outlined.Close"
+                                 Variant="Variant.Outlined"
+                                 Class="tile-selector-chip">
+                            @cycle.Name
+                        </MudChip>
+                    }
+                </MudChipSet>
+
+                <MudChip T="string"
+                         Icon="@Icons.Material.Outlined.Add"
+                         Color="Color.Success"
+                         Variant="Variant.Outlined"
+                         OnClick="AddCycleNode"
+                         Class="mud-chip-margin">
+                    Add Node
+                </MudChip>
+
+                <MudText Typo="Typo.h6">Active Node</MudText>
+                @if (CurrentNode is not null)
+                {
+                    <MudTextField Label="Node Name" @bind-Value="@CurrentNode.Name" />
+
+                    <MudCheckBox T="bool" @bind-Value="CurrentNode.IsStart" Label="Is start?" />
+                    <MudCheckBox T="bool" @bind-Value="CurrentNode.IsGoal" Label="Is goal?" />
+
+                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedKeys" Label="Contained keys" MultiSelection>
+                        @for (var i = 0; i < 10; i++)
+                        {
+                            var i_ = i;
+                            <MudSelectItem Value="@i_.ToString()">
+                                @i_
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.KeyRequirements" Label="Key requirements" MultiSelection>
+                        @for (var i = 0; i < 10; i++)
+                        {
+                            var i_ = i;
+                            <MudSelectItem Value="@i_.ToString()">
+                                @i_
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedLevers" Label="Contained levers" MultiSelection>
+                        @for (var i = 0; i < 10; i++)
+                        {
+                            var i_ = i;
+                            <MudSelectItem Value="@i_.ToString()">
+                                @i_
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverRequirements" Label="Lever requirements" MultiSelection>
+                        @for (var i = 0; i < 10; i++)
+                        {
+                            var i_ = i;
+                            <MudSelectItem Value="@i_.ToString()">
+                                @i_
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverKeyRequirements" Label="Lever key requirements" MultiSelection>
+                        @for (var i = 0; i < 10; i++)
+                        {
+                            var i_ = i;
+                            <MudSelectItem Value="@i_.ToString()">
+                                @i_
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                }
+            }
+
+        </MudStack>
+
+        <MudStack>
+            <MudText Typo="Typo.h6">Arcs</MudText>
+            @if (CurrentCycle is not null)
+            {
+                <MudChipSet T="CycleArc"
+                            CheckMark
+                            SelectedValue="CurrentArc"
+                            SelectedValueChanged="OnSelectedCycleArcChanged"
+                            SelectionMode="SelectionMode.SingleSelection"
+                            Class="tile-selector">
+                    @foreach (var arc in CurrentCycle.Arcs)
+                    {
+                        var a = arc;
+                        <MudChip T="CycleArc"
+                                 Value="@a"
+                                 Text="@($"{a.From?.Name ?? "None"} - {a.To?.Name ?? "None"}")"
+                                 Color="Color.Default"
+                                 OnClose="() => RemoveCycleArc(a)"
+                                 CloseIcon="@Icons.Material.Outlined.Close"
+                                 Variant="Variant.Outlined"
+                                 Class="tile-selector-chip">
+                        </MudChip>
+                    }
+                </MudChipSet>
+
+                <MudChip T="string"
+                         Icon="@Icons.Material.Outlined.Add"
+                         Color="Color.Success"
+                         Variant="Variant.Outlined"
+                         OnClick="AddCycleArc"
+                         Class="mud-chip-margin">
+                    Add Arc
+                </MudChip>
+
+                <MudText Typo="Typo.h6">Active Arc</MudText>
+                @if (CurrentArc is not null)
+                {
+                    <MudSelect Value="CurrentArc.From" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcFromChanged" T="CycleNode">
+                        @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.To))
+                        {
+                            var n = node;
+                            <MudSelectItem T="CycleNode" Value="n" DisplayString="@n.Name"> @n.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect Value="CurrentArc.To" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcToChanged" T="CycleNode">
+                        @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.From))
+                        {
+                            var n = node;
+                            <MudSelectItem T="CycleNode" Value="n">@n.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudCheckBox T="bool" Value="CurrentArc.IsOneWay" ValueChanged="OnCurrentArcIsOneWayChanged" Label="Is one way?" />
+                    <MudCheckBox T="bool" Value="CurrentArc.InsertionPoint" ValueChanged="OnCurrentArcInsertionPointChanged" Label="Is insertion point?" />
+                    @if (CurrentArc.InsertionPoint)
+                    {
+                        <MudCheckBox T="bool" @bind-Value="CurrentArc.IsLongInsertionPoint" Label="Is long insertion point?" />
+                    }
+                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSecret" Label="Is secret?" />
+                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSightLineOnly" Label="Is sight line only?" />
+                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsDangerous" Label="Is dangerous?" />
+                    <MudNumericField T="int?" @bind-Value="CurrentArc.Theme" Label="Theme" />
+                }
+            }
+        </MudStack>
+        <MudStack StretchItems="StretchItems.End">
+            <MudButtonGroup Variant="Variant.Outlined">
+                <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
+                <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
+                <!-- Load Template Button -->
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                    <ActivatorContent>
+                        <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
+                            Load
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
+            </MudButtonGroup>
+
+            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+                @if (!string.IsNullOrWhiteSpace(text))
+                {
+                    <MermaidDiagram Definition="@text" />
+                }
+            </MudStack>
+        </MudStack>
+    </MudStack>
+</MudMainContent>
+@code {
+    private string text = "graph LR";
+    private List<Cycle> Cycles { get; set; } = [];
+
+    public Cycle CurrentCycle { get; set; }
+    public CycleNode CurrentNode { get; set; }
+    public CycleArc CurrentArc { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cycles = await LocalStorage.GetItemAsync<List<Cycle>>("Cycles");
+        Cycles = cycles ?? Cycles;
+    }
+
+    public async Task OnArcsChanged(IEnumerable<CycleNode?> arcs)
+    {
+        Console.WriteLine(string.Join(", ", arcs.Select(a => a.Name)));
+        CurrentCycle.Arcs.RemoveAll(a => a.From == CurrentNode);
+        CurrentCycle.Arcs.AddRange(arcs.Select(a => new CycleArc { From = CurrentNode, To = a }));
+        await SetChart();
+    }
+
+    public async Task OnCurrentArcInsertionPointChanged(bool insertionPoint)
+    {
+        CurrentArc.InsertionPoint = insertionPoint;
+        await SetChart();
+    }
+
+    public async Task OnCurrentArcIsOneWayChanged(bool isOneWay)
+    {
+        CurrentArc.IsOneWay = isOneWay;
+        await SetChart();
+    }
+
+    private async Task OnCurrentArcFromChanged(CycleNode node)
+    {
+        CurrentArc.From = node;
+        await SetChart();
+    }
+
+
+    private async Task OnCurrentArcToChanged(CycleNode node)
+    {
+        CurrentArc.To = node;
+        await SetChart();
+    }
+
+
+    private async Task OnSelectedCycleArcChanged(CycleArc arc)
+    {
+        CurrentArc = arc;
+        await SetChart();
+    }
+
+    private async Task OnSelectedCycleChanged(Cycle cycle)
+    {
+        CurrentCycle = cycle;
+        CurrentNode = null;
+        CurrentArc = null;
+        await SetChart();
+    }
+
+    private async Task OnSelectedCycleNodeChanged(CycleNode node)
+    {
+        CurrentNode = node;
+        await SetChart();
+    }
+
+    private async Task AddCycle()
+    {
+        var newCycle = new Cycle { Name = $"Cycle {Cycles.Count + 1}" };
+        Cycles.Add(newCycle);
+        CurrentCycle = newCycle;
+        CurrentNode = null;
+        CurrentArc = null;
+        await SetChart();
+    }
+
+    private async Task RemoveCycle(Cycle cycle)
+    {
+        Cycles.Remove(cycle);
+        await SetChart();
+    }
+
+    private async Task RemoveCycleArc(CycleArc arc)
+    {
+        CurrentCycle.Arcs.Remove(arc);
+        await SetChart();
+    }
+
+    private async Task AddCycleNode()
+    {
+        var newCycleNode = new CycleNode { Name = $"Node {CurrentCycle.Nodes.Count + 1}" };
+        CurrentCycle.Nodes.Add(newCycleNode);
+        CurrentNode = newCycleNode;
+        await SetChart();
+    }
+
+    private async Task AddCycleArc()
+    {
+        var newCycleArc = new CycleArc();
+        CurrentCycle.Arcs.Add(newCycleArc);
+        CurrentArc = newCycleArc;
+        await SetChart();
+    }
+
+    private async Task RemoveCycleNode(CycleNode cycleNode)
+    {
+        CurrentCycle.Nodes.Remove(cycleNode);
+        CurrentCycle.Arcs.RemoveAll(a => a.To == cycleNode || a.From == cycleNode);
+        await SetChart();
+    }
+
+    private async Task SetChart()
+    {
+        await LocalStorage.SetItemAsync("Cycles", Cycles);
+        if (CurrentCycle is null)
+        {
+            text = "graph LR";
+            return;
+        }
+        var direction = "TD";
+        var nodes = CurrentCycle
+            .Nodes
+            .Where(n => !string.IsNullOrWhiteSpace(n.Name))
+            .Select(n => new Node(n.Name, n.Name, n.ShapeType))
+            .ToList();
+        var links = CurrentCycle
+            .Arcs
+            .Where(a => a.From is not null && a.To is not null)
+            .Select(a => new Link(a.From.Name, a.To.Name, a.Label, bidirectional: !a.IsOneWay))
+            .ToList();
+        Flowchart flowchart = new(direction, nodes, links);
+        text = "%%{init: {'theme':'dark'}}%%\n" + flowchart.CalculateFlowchart();
+    }
+
+    // Helper method to sort pair keys (to avoid duplicate bidirectional pairs)
+    private static (string Min, string Max) SortPair(string from, string to)
+    {
+        if (from.CompareTo(to) <= 0)
+        {
+            return (from, to);
+        }
+        return (to, from);
+    }
+    private async Task SaveTemplate()
+    {
+        await LocalStorage.SetItemAsync("Cycles", Cycles);
+    }
+
+    private async Task DownloadTemplate()
+    {
+        var json = JsonSerializer.Serialize(Cycles, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault
+            });
+        var fileName = $"cycles.json";
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "application/json", json);
+    }
+
+    private async Task PreviewTemplate()
+    {
+        var json = JsonSerializer.Serialize(Cycles, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault
+            });
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true,
+            };
+
+        var dialog = DialogService.ShowMessageBox("Preview Template", (MarkupString)$"<pre style=\"font-family: monospace\">{json}</pre>", "Copy to clipboard", "Cancel");
+
+        var result = (await dialog) ?? false;
+        if (result)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+        }
+    }
+
+    private async Task UploadFiles(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream();
+        using var streamReader = new StreamReader(stream);
+        Cycles = JsonSerializer.Deserialize<List<Cycle>>(await streamReader.ReadToEndAsync(), new JsonSerializerOptions{
+            AllowTrailingCommas = true
+        });
+    }
+}
