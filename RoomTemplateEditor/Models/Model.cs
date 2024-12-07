@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json;
 using MermaidDotNet.Models;
+using MermaidDotNet;
 
 namespace RoomTemplateEditor.Models;
 
@@ -99,14 +100,28 @@ public class MatrixTemplate
     public string[,] Matrix { get; set; }
 }
 
-public class Cycle
+public record Cycle
 {
     public string Name { get; set; }
     public List<CycleNode> Nodes { get; set; } = [];
     public List<CycleArc> Arcs { get; set; } = [];
+
+    public string ToMermaid(string direction = "TD")
+    {
+        var nodes = Nodes
+            .Where(n => !string.IsNullOrWhiteSpace(n.Name))
+            .Select(n => new Node(n.Name, n.Name, n.ShapeType))
+            .ToList();
+        var links = Arcs
+            .Where(a => a.From is not null && a.To is not null)
+            .Select(a => new Link(a.From, a.To, a.Label, isBidirectional: !a.IsOneWay))
+            .ToList();
+        Flowchart flowchart = new(direction, nodes, links);
+        return "%%{init: {'theme':'dark'}}%%\n" + flowchart.CalculateFlowchart();
+    }
 }
 
-public class CycleNode
+public record CycleNode
 {
     public string Name { get; set; }
 
@@ -114,7 +129,7 @@ public class CycleNode
     public bool IsGoal { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IEnumerable<string> ContainedKeys { get; set; } 
+    public IEnumerable<string> ContainedKeys { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<string> KeyRequirements { get; set; }
@@ -152,11 +167,11 @@ public class CycleNode
         }
     }
 }
-public class CycleArc
+public record CycleArc
 {
-    public CycleNode From { get; set; }
-    public CycleNode To { get; set; }
-    public bool IsOneWay  { get; set; }
+    public string From { get; set; }
+    public string To { get; set; }
+    public bool IsOneWay { get; set; }
     public bool InsertionPoint { get; set; }
     public bool IsLongInsertionPoint { get; set; }
     public bool IsSightLineOnly { get; set; }

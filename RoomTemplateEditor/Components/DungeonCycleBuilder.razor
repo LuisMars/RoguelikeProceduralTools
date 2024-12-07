@@ -1,0 +1,89 @@
+﻿@using RoomTemplateEditor.Models
+
+<MudButtonGroup Variant="Variant.Outlined">
+    <MudButton OnClick="Step">Step random</MudButton>
+    <MudButton Disabled="CurrentCycle is null" OnClick="StepCurrent">Step current</MudButton>
+    <MudButton OnClick="Reset">Reset</MudButton>
+</MudButtonGroup>
+@if (Dungeon is not null)
+{
+    <MermaidDiagram Definition="@Dungeon.ToMermaid("LR")" />
+}
+
+@code {
+
+    private Cycle Dungeon { get; set; }
+    private int Steps { get; set; }
+    private string text = "graph LR";
+
+    [Parameter]
+    public List<Cycle> Cycles { get; set; } = [];
+
+    [Parameter]
+    public Cycle CurrentCycle { get; set; }
+
+    [Parameter]
+    public EventCallback<List<Cycle>> CyclesChanged { get; set; }
+
+    private void Step()
+    {
+        Steps++;
+        var nextCycle = GetRandomCycle();
+        ApplyStep(nextCycle);
+
+    }
+    private void StepCurrent()
+    {
+        Steps++;
+        var nextCycle = Clone(CurrentCycle);
+        ApplyStep(nextCycle);
+
+    }
+
+    private void ApplyStep(Cycle nextCycle)
+    {
+        if (Dungeon is null)
+        {
+            Dungeon = nextCycle;
+            return;
+        }
+        var insertionPoint = Dungeon.Arcs.Where(a => a.InsertionPoint).MinBy(_ => Random.Shared.NextDouble());
+        if (insertionPoint is not null)
+        {
+            Dungeon.Nodes.AddRange(nextCycle.Nodes);
+            Dungeon.Arcs.AddRange(nextCycle.Arcs);
+            Dungeon.Arcs.Remove(insertionPoint);
+            Dungeon.Arcs.Add(insertionPoint with
+                {
+                    InsertionPoint = insertionPoint.IsLongInsertionPoint,
+                    IsLongInsertionPoint = false,
+                    From = insertionPoint.From,
+                    To = nextCycle.Nodes.First(n => n.IsStart).Name,
+                });
+            Dungeon.Arcs.Add(new CycleArc
+                {
+                    From = nextCycle.Nodes.First(n => n.IsGoal).Name,
+                    To = insertionPoint.To,
+                });
+        }
+    }
+    private Cycle GetRandomCycle()
+    {
+        var cycle = Cycles[Random.Shared.Next(Cycles.Count)];
+        return Clone(cycle);
+    }
+
+    private Cycle Clone(Cycle cycle)
+    {
+        return cycle with
+            {
+                Arcs = cycle.Arcs.Select(a => a with { From = $"{a.From}_{Steps}", To = $"{a.To}_{Steps}" }).ToList(),
+                Nodes = cycle.Nodes.Select(n => n with { Name = $"{n.Name}_{Steps}" }).ToList(),
+            };
+    }
+    private void Reset()
+    {
+        Steps = 0;
+        Dungeon = null;
+    }
+}

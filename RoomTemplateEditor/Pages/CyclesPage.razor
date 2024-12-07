@@ -2,6 +2,7 @@
 @using MermaidDotNet
 @using MermaidDotNet.Models
 @using RoomTemplateEditor.Models
+@using RoomTemplateEditor.Components
 @using System.Text.Json
 
 @inject IDialogService DialogService
@@ -12,33 +13,33 @@
     <MudStack Spacing="2">
         <MudText Typo="Typo.h6">Cycles</MudText>
         <MudChipSet T="Cycle"
-                    CheckMark
-                    SelectedValue="CurrentCycle"
-                    SelectedValueChanged="OnSelectedCycleChanged"
-                    SelectionMode="SelectionMode.SingleSelection"
-                    Class="tile-selector">
+        CheckMark
+        SelectedValue="CurrentCycle"
+        SelectedValueChanged="OnSelectedCycleChanged"
+        SelectionMode="SelectionMode.SingleSelection"
+        Class="tile-selector">
             @foreach (var cycle in Cycles)
             {
                 var c = cycle;
                 <MudChip T="Cycle"
-                         Value="@c"
-                         Text="@c.Name"
-                         Color="Color.Default"
-                         OnClose="() => RemoveCycle(c)"
-                         CloseIcon="@Icons.Material.Outlined.Close"
-                         Variant="Variant.Outlined"
-                         Class="tile-selector-chip">
+                Value="@c"
+                Text="@c.Name"
+                Color="Color.Default"
+                OnClose="() => RemoveCycle(c)"
+                CloseIcon="@Icons.Material.Outlined.Close"
+                Variant="Variant.Outlined"
+                Class="tile-selector-chip">
                     @cycle.Name
                 </MudChip>
             }
         </MudChipSet>
 
         <MudChip T="string"
-                 Icon="@Icons.Material.Outlined.Add"
-                 Color="Color.Success"
-                 Variant="Variant.Outlined"
-                 OnClick="AddCycle"
-                 Class="mud-chip-margin">
+        Icon="@Icons.Material.Outlined.Add"
+        Color="Color.Success"
+        Variant="Variant.Outlined"
+        OnClick="AddCycle"
+        Class="mud-chip-margin">
             Add cycle
         </MudChip>
         @if (CurrentCycle is not null)
@@ -53,33 +54,33 @@
         {
             <MudText Typo="Typo.h6">Nodes</MudText>
             <MudChipSet T="CycleNode"
-                        CheckMark
-                        SelectedValue="CurrentNode"
-                        SelectedValueChanged="OnSelectedCycleNodeChanged"
-                        SelectionMode="SelectionMode.SingleSelection"
-                        Class="tile-selector">
+            CheckMark
+            SelectedValue="CurrentNode"
+            SelectedValueChanged="OnSelectedCycleNodeChanged"
+            SelectionMode="SelectionMode.SingleSelection"
+            Class="tile-selector">
                 @foreach (var cycle in CurrentCycle.Nodes)
                 {
                     var c = cycle;
                     <MudChip T="CycleNode"
-                             Value="@c"
-                             Text="@c.Name"
-                             Color="Color.Default"
-                             OnClose="() => RemoveCycleNode(c)"
-                             CloseIcon="@Icons.Material.Outlined.Close"
-                             Variant="Variant.Outlined"
-                             Class="tile-selector-chip">
+                    Value="@c"
+                    Text="@c.Name"
+                    Color="Color.Default"
+                    OnClose="() => RemoveCycleNode(c)"
+                    CloseIcon="@Icons.Material.Outlined.Close"
+                    Variant="Variant.Outlined"
+                    Class="tile-selector-chip">
                         @cycle.Name
                     </MudChip>
                 }
             </MudChipSet>
 
             <MudChip T="string"
-                     Icon="@Icons.Material.Outlined.Add"
-                     Color="Color.Success"
-                     Variant="Variant.Outlined"
-                     OnClick="AddCycleNode"
-                     Class="mud-chip-margin">
+            Icon="@Icons.Material.Outlined.Add"
+            Color="Color.Success"
+            Variant="Variant.Outlined"
+            OnClick="AddCycleNode"
+            Class="mud-chip-margin">
                 Add Node
             </MudChip>
 
@@ -150,47 +151,47 @@
         @if (CurrentCycle is not null)
         {
             <MudChipSet T="CycleArc"
-                        CheckMark
-                        SelectedValue="CurrentArc"
-                        SelectedValueChanged="OnSelectedCycleArcChanged"
-                        SelectionMode="SelectionMode.SingleSelection"
-                        Class="tile-selector">
+            CheckMark
+            SelectedValue="CurrentArc"
+            SelectedValueChanged="OnSelectedCycleArcChanged"
+            SelectionMode="SelectionMode.SingleSelection"
+            Class="tile-selector">
                 @foreach (var arc in CurrentCycle.Arcs)
                 {
                     var a = arc;
                     <MudChip T="CycleArc"
-                             Value="@a"
-                             Text="@($"{a.From?.Name ?? "None"} - {a.To?.Name ?? "None"}")"
-                             Color="Color.Default"
-                             OnClose="() => RemoveCycleArc(a)"
-                             CloseIcon="@Icons.Material.Outlined.Close"
-                             Variant="Variant.Outlined"
-                             Class="tile-selector-chip">
+                    Value="@a"
+                    Text="@($"{a.From ?? "None"} - {a.To ?? "None"}")"
+                    Color="Color.Default"
+                    OnClose="() => RemoveCycleArc(a)"
+                    CloseIcon="@Icons.Material.Outlined.Close"
+                    Variant="Variant.Outlined"
+                    Class="tile-selector-chip">
                     </MudChip>
                 }
             </MudChipSet>
 
             <MudChip T="string"
-                     Icon="@Icons.Material.Outlined.Add"
-                     Color="Color.Success"
-                     Variant="Variant.Outlined"
-                     OnClick="AddCycleArc"
-                     Class="mud-chip-margin">
+            Icon="@Icons.Material.Outlined.Add"
+            Color="Color.Success"
+            Variant="Variant.Outlined"
+            OnClick="AddCycleArc"
+            Class="mud-chip-margin">
                 Add Arc
             </MudChip>
 
             <MudText Typo="Typo.h6">Active Arc</MudText>
             @if (CurrentArc is not null)
             {
-                <MudSelect Value="CurrentArc.From" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcFromChanged" T="CycleNode">
-                    @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.To))
+                <MudSelect Value="CurrentCycle.Nodes.FirstOrDefault(n => n.Name == CurrentArc.From)" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcFromChanged" T="CycleNode">
+                    @foreach (var node in CurrentCycle.Nodes.Where(n => n.Name != CurrentArc.To))
                     {
                         var n = node;
                         <MudSelectItem T="CycleNode" Value="n" DisplayString="@n.Name"> @n.Name</MudSelectItem>
                     }
                 </MudSelect>
-                <MudSelect Value="CurrentArc.To" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcToChanged" T="CycleNode">
-                    @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.From))
+                <MudSelect Value="CurrentCycle.Nodes.FirstOrDefault(n => n.Name == CurrentArc.To)" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcToChanged" T="CycleNode">
+                    @foreach (var node in CurrentCycle.Nodes.Where(n => n.Name != CurrentArc.From))
                     {
                         var n = node;
                         <MudSelectItem T="CycleNode" Value="n">@n.Name</MudSelectItem>
@@ -226,14 +227,15 @@
         </MudButtonGroup>
 
         <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
-            @if (!string.IsNullOrWhiteSpace(text))
+            @if (CurrentCycle is not null)
             {
-                <MermaidDiagram Definition="@text" />
+                <MermaidDiagram Definition="@CurrentCycle.ToMermaid()" />
             }
         </MudStack>
     </MudStack>
 </MudStack>
 
+<DungeonCycleBuilder @bind-Cycles="Cycles" CurrentCycle="CurrentCycle" />
 @code {
     private string text = "graph LR";
     private List<Cycle> Cycles { get; set; } = [];
@@ -251,8 +253,8 @@
     public async Task OnArcsChanged(IEnumerable<CycleNode?> arcs)
     {
         Console.WriteLine(string.Join(", ", arcs.Select(a => a.Name)));
-        CurrentCycle.Arcs.RemoveAll(a => a.From == CurrentNode);
-        CurrentCycle.Arcs.AddRange(arcs.Select(a => new CycleArc { From = CurrentNode, To = a }));
+        CurrentCycle.Arcs.RemoveAll(a => a.From == CurrentNode.Name);
+        CurrentCycle.Arcs.AddRange(arcs.Select(a => new CycleArc { From = CurrentNode.Name, To = a.Name }));
         await SetChart();
     }
 
@@ -270,14 +272,14 @@
 
     private async Task OnCurrentArcFromChanged(CycleNode node)
     {
-        CurrentArc.From = node;
+        CurrentArc.From = node.Name;
         await SetChart();
     }
 
 
     private async Task OnCurrentArcToChanged(CycleNode node)
     {
-        CurrentArc.To = node;
+        CurrentArc.To = node.Name;
         await SetChart();
     }
 
@@ -343,7 +345,7 @@
     private async Task RemoveCycleNode(CycleNode cycleNode)
     {
         CurrentCycle.Nodes.Remove(cycleNode);
-        CurrentCycle.Arcs.RemoveAll(a => a.To == cycleNode || a.From == cycleNode);
+        CurrentCycle.Arcs.RemoveAll(a => a.To == cycleNode.Name || a.From == cycleNode.Name);
         await SetChart();
     }
 
@@ -355,19 +357,7 @@
             text = "graph LR";
             return;
         }
-        var direction = "TD";
-        var nodes = CurrentCycle
-            .Nodes
-            .Where(n => !string.IsNullOrWhiteSpace(n.Name))
-            .Select(n => new Node(n.Name, n.Name, n.ShapeType))
-            .ToList();
-        var links = CurrentCycle
-            .Arcs
-            .Where(a => a.From is not null && a.To is not null)
-            .Select(a => new Link(a.From.Name, a.To.Name, a.Label, isBidirectional: !a.IsOneWay))
-            .ToList();
-        Flowchart flowchart = new(direction, nodes, links);
-        text = "%%{init: {'theme':'dark'}}%%\n" + flowchart.CalculateFlowchart();
+        text = CurrentCycle.ToMermaid();
     }
 
     // Helper method to sort pair keys (to avoid duplicate bidirectional pairs)
