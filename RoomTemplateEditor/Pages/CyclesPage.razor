@@ -365,7 +365,7 @@
         var links = CurrentCycle
             .Arcs
             .Where(a => a.From is not null && a.To is not null)
-            .Select(a => new Link(a.From.Name, a.To.Name, a.Label, bidirectional: !a.IsOneWay))
+            .Select(a => new Link(a.From.Name, a.To.Name, a.Label, isBidirectional: !a.IsOneWay))
             .ToList();
         Flowchart flowchart = new(direction, nodes, links);
         text = "%%{init: {'theme':'dark'}}%%\n" + flowchart.CalculateFlowchart();
