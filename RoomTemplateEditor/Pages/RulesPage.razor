@@ -7,47 +7,45 @@
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-<MudMainContent>
-    <MudStack Row="true" Justify="Justify.Center" Spacing="10">
-        <MudStack Spacing="2">
-            <TileTypeEditor TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
-        </MudStack>
-        <TagEditor @bind-Tags="@RoomTemplate.Tags" />
-        <MudStack>
-            <MudButtonGroup Variant="Variant.Outlined">
-                <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
-                <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
-                <!-- Load Template Button -->
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
-                    <ActivatorContent>
-                        <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
-                            Load
-                        </MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
-            </MudButtonGroup>
-            <MudTextField @bind-Value="RoomTemplate.TemplateName" Label="Template Name" />
-            <!-- RuleList Component -->
-            <RuleList Rules="RoomTemplate.Rules" CurrentRule="CurrentRule" CurrentRuleChanged="OnCurrentRuleChanged" OnAddRule="AddRule" OnDuplicateRule="Duplicate" OnDeleteRule="DeleteRule" />
-
-            <!-- RuleEditor Component -->
-            <RuleEditor @bind-Tags="@RoomTemplate.Tags" @bind-CurrentRule="CurrentRule" OnMatrixSizeChanged="UpdateMatrixSize" />
-            @if (CurrentRule is not null)
-            {
-                <MudStack Row="true" Justify="Justify.SpaceAround">
-                    <!-- PatternMatrix Component -->
-                    <PatternMatrix Matrix="CurrentRule.Pattern" Title="Pattern" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
-
-                    <!-- ReplacementMatrix Component -->
-                    <PatternMatrix Matrix="CurrentRule.Replacement" Title="Replacement" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
-                </MudStack>
-            }
-            <RuleTester RoomTemplate="@RoomTemplate" @bind-SelectedTileType="@SelectedTileType" @bind-CurrentRule="CurrentRule" AllRules="RoomTemplate.Rules" />
-        </MudStack>
+<MudStack Row="true" Justify="Justify.Center" Spacing="10" Class="mt-10">
+    <MudStack Spacing="2">
+        <TileTypeEditor TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
     </MudStack>
+    <TagEditor @bind-Tags="@RoomTemplate.Tags" />
+    <MudStack>
+        <MudButtonGroup Variant="Variant.Outlined">
+            <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
+            <!-- Load Template Button -->
+            <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                <ActivatorContent>
+                    <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
+                        Load
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
+        </MudButtonGroup>
+        <MudTextField @bind-Value="RoomTemplate.TemplateName" Label="Template Name" />
+        <!-- RuleList Component -->
+        <RuleList Rules="RoomTemplate.Rules" CurrentRule="CurrentRule" CurrentRuleChanged="OnCurrentRuleChanged" OnAddRule="AddRule" OnDuplicateRule="Duplicate" OnDeleteRule="DeleteRule" />
 
-</MudMainContent>
+        <!-- RuleEditor Component -->
+        <RuleEditor @bind-Tags="@RoomTemplate.Tags" @bind-CurrentRule="CurrentRule" OnMatrixSizeChanged="UpdateMatrixSize" />
+        @if (CurrentRule is not null)
+        {
+            <MudStack Row="true" Justify="Justify.SpaceAround">
+                <!-- PatternMatrix Component -->
+                <PatternMatrix Matrix="CurrentRule.Pattern" Title="Pattern" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
+
+                <!-- ReplacementMatrix Component -->
+                <PatternMatrix Matrix="CurrentRule.Replacement" Title="Replacement" TileTypes="RoomTemplate.TileTypes" @bind-SelectedTileType="@SelectedTileType" />
+            </MudStack>
+        }
+        <RuleTester RoomTemplate="@RoomTemplate" @bind-SelectedTileType="@SelectedTileType" @bind-CurrentRule="CurrentRule" AllRules="RoomTemplate.Rules" />
+    </MudStack>
+</MudStack>
+
 
 <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Add" Style="position: fixed; bottom: 16px; right: 16px;" OnClick="AddRule" />
 

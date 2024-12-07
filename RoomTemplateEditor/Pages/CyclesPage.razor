@@ -8,24 +8,64 @@
 @inject IJSRuntime JSRuntime
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
-<MudMainContent>
-    <MudStack Row="true" Justify="Justify.Center" Spacing="10">
-        <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">Cycles</MudText>
-            <MudChipSet T="Cycle"
+<MudStack Row="true" Justify="Justify.Center" Spacing="10" Class="mt-10">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.h6">Cycles</MudText>
+        <MudChipSet T="Cycle"
+                    CheckMark
+                    SelectedValue="CurrentCycle"
+                    SelectedValueChanged="OnSelectedCycleChanged"
+                    SelectionMode="SelectionMode.SingleSelection"
+                    Class="tile-selector">
+            @foreach (var cycle in Cycles)
+            {
+                var c = cycle;
+                <MudChip T="Cycle"
+                         Value="@c"
+                         Text="@c.Name"
+                         Color="Color.Default"
+                         OnClose="() => RemoveCycle(c)"
+                         CloseIcon="@Icons.Material.Outlined.Close"
+                         Variant="Variant.Outlined"
+                         Class="tile-selector-chip">
+                    @cycle.Name
+                </MudChip>
+            }
+        </MudChipSet>
+
+        <MudChip T="string"
+                 Icon="@Icons.Material.Outlined.Add"
+                 Color="Color.Success"
+                 Variant="Variant.Outlined"
+                 OnClick="AddCycle"
+                 Class="mud-chip-margin">
+            Add cycle
+        </MudChip>
+        @if (CurrentCycle is not null)
+        {
+            <MudTextField Label="Cycle Name" @bind-Value="@CurrentCycle.Name" />
+        }
+    </MudStack>
+
+    <MudStack>
+        <MudText Typo="Typo.h6">Active Cycle</MudText>
+        @if (CurrentCycle is not null)
+        {
+            <MudText Typo="Typo.h6">Nodes</MudText>
+            <MudChipSet T="CycleNode"
                         CheckMark
-                        SelectedValue="CurrentCycle"
-                        SelectedValueChanged="OnSelectedCycleChanged"
+                        SelectedValue="CurrentNode"
+                        SelectedValueChanged="OnSelectedCycleNodeChanged"
                         SelectionMode="SelectionMode.SingleSelection"
                         Class="tile-selector">
-                @foreach (var cycle in Cycles)
+                @foreach (var cycle in CurrentCycle.Nodes)
                 {
                     var c = cycle;
-                    <MudChip T="Cycle"
+                    <MudChip T="CycleNode"
                              Value="@c"
                              Text="@c.Name"
                              Color="Color.Default"
-                             OnClose="() => RemoveCycle(c)"
+                             OnClose="() => RemoveCycleNode(c)"
                              CloseIcon="@Icons.Material.Outlined.Close"
                              Variant="Variant.Outlined"
                              Class="tile-selector-chip">
@@ -38,203 +78,162 @@
                      Icon="@Icons.Material.Outlined.Add"
                      Color="Color.Success"
                      Variant="Variant.Outlined"
-                     OnClick="AddCycle"
+                     OnClick="AddCycleNode"
                      Class="mud-chip-margin">
-                Add cycle
+                Add Node
             </MudChip>
-            @if (CurrentCycle is not null)
+
+            <MudText Typo="Typo.h6">Active Node</MudText>
+            @if (CurrentNode is not null)
             {
-                <MudTextField Label="Cycle Name" @bind-Value="@CurrentCycle.Name" />
-            }
-        </MudStack>
+                <MudTextField Label="Node Name" @bind-Value="@CurrentNode.Name" />
 
-        <MudStack>
-            <MudText Typo="Typo.h6">Active Cycle</MudText>
-            @if (CurrentCycle is not null)
+                <MudCheckBox T="bool" @bind-Value="CurrentNode.IsStart" Label="Is start?" />
+                <MudCheckBox T="bool" @bind-Value="CurrentNode.IsGoal" Label="Is goal?" />
+
+                <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedKeys" Label="Contained keys" MultiSelection>
+                    @for (var i = 0; i < 10; i++)
+                    {
+                        var i_ = i;
+                        <MudSelectItem Value="@i_.ToString()">
+                            @i_
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="string" @bind-SelectedValues="CurrentNode.KeyRequirements" Label="Key requirements" MultiSelection>
+                    @for (var i = 0; i < 10; i++)
+                    {
+                        var i_ = i;
+                        <MudSelectItem Value="@i_.ToString()">
+                            @i_
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedLevers" Label="Contained levers" MultiSelection>
+                    @for (var i = 0; i < 10; i++)
+                    {
+                        var i_ = i;
+                        <MudSelectItem Value="@i_.ToString()">
+                            @i_
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverRequirements" Label="Lever requirements" MultiSelection>
+                    @for (var i = 0; i < 10; i++)
+                    {
+                        var i_ = i;
+                        <MudSelectItem Value="@i_.ToString()">
+                            @i_
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverKeyRequirements" Label="Lever key requirements" MultiSelection>
+                    @for (var i = 0; i < 10; i++)
+                    {
+                        var i_ = i;
+                        <MudSelectItem Value="@i_.ToString()">
+                            @i_
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            }
+        }
+
+    </MudStack>
+
+    <MudStack>
+        <MudText Typo="Typo.h6">Arcs</MudText>
+        @if (CurrentCycle is not null)
+        {
+            <MudChipSet T="CycleArc"
+                        CheckMark
+                        SelectedValue="CurrentArc"
+                        SelectedValueChanged="OnSelectedCycleArcChanged"
+                        SelectionMode="SelectionMode.SingleSelection"
+                        Class="tile-selector">
+                @foreach (var arc in CurrentCycle.Arcs)
+                {
+                    var a = arc;
+                    <MudChip T="CycleArc"
+                             Value="@a"
+                             Text="@($"{a.From?.Name ?? "None"} - {a.To?.Name ?? "None"}")"
+                             Color="Color.Default"
+                             OnClose="() => RemoveCycleArc(a)"
+                             CloseIcon="@Icons.Material.Outlined.Close"
+                             Variant="Variant.Outlined"
+                             Class="tile-selector-chip">
+                    </MudChip>
+                }
+            </MudChipSet>
+
+            <MudChip T="string"
+                     Icon="@Icons.Material.Outlined.Add"
+                     Color="Color.Success"
+                     Variant="Variant.Outlined"
+                     OnClick="AddCycleArc"
+                     Class="mud-chip-margin">
+                Add Arc
+            </MudChip>
+
+            <MudText Typo="Typo.h6">Active Arc</MudText>
+            @if (CurrentArc is not null)
             {
-                <MudText Typo="Typo.h6">Nodes</MudText>
-                <MudChipSet T="CycleNode"
-                            CheckMark
-                            SelectedValue="CurrentNode"
-                            SelectedValueChanged="OnSelectedCycleNodeChanged"
-                            SelectionMode="SelectionMode.SingleSelection"
-                            Class="tile-selector">
-                    @foreach (var cycle in CurrentCycle.Nodes)
+                <MudSelect Value="CurrentArc.From" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcFromChanged" T="CycleNode">
+                    @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.To))
                     {
-                        var c = cycle;
-                        <MudChip T="CycleNode"
-                                 Value="@c"
-                                 Text="@c.Name"
-                                 Color="Color.Default"
-                                 OnClose="() => RemoveCycleNode(c)"
-                                 CloseIcon="@Icons.Material.Outlined.Close"
-                                 Variant="Variant.Outlined"
-                                 Class="tile-selector-chip">
-                            @cycle.Name
-                        </MudChip>
+                        var n = node;
+                        <MudSelectItem T="CycleNode" Value="n" DisplayString="@n.Name"> @n.Name</MudSelectItem>
                     }
-                </MudChipSet>
-
-                <MudChip T="string"
-                         Icon="@Icons.Material.Outlined.Add"
-                         Color="Color.Success"
-                         Variant="Variant.Outlined"
-                         OnClick="AddCycleNode"
-                         Class="mud-chip-margin">
-                    Add Node
-                </MudChip>
-
-                <MudText Typo="Typo.h6">Active Node</MudText>
-                @if (CurrentNode is not null)
+                </MudSelect>
+                <MudSelect Value="CurrentArc.To" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcToChanged" T="CycleNode">
+                    @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.From))
+                    {
+                        var n = node;
+                        <MudSelectItem T="CycleNode" Value="n">@n.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudCheckBox T="bool" Value="CurrentArc.IsOneWay" ValueChanged="OnCurrentArcIsOneWayChanged" Label="Is one way?" />
+                <MudCheckBox T="bool" Value="CurrentArc.InsertionPoint" ValueChanged="OnCurrentArcInsertionPointChanged" Label="Is insertion point?" />
+                @if (CurrentArc.InsertionPoint)
                 {
-                    <MudTextField Label="Node Name" @bind-Value="@CurrentNode.Name" />
-
-                    <MudCheckBox T="bool" @bind-Value="CurrentNode.IsStart" Label="Is start?" />
-                    <MudCheckBox T="bool" @bind-Value="CurrentNode.IsGoal" Label="Is goal?" />
-
-                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedKeys" Label="Contained keys" MultiSelection>
-                        @for (var i = 0; i < 10; i++)
-                        {
-                            var i_ = i;
-                            <MudSelectItem Value="@i_.ToString()">
-                                @i_
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
-
-                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.KeyRequirements" Label="Key requirements" MultiSelection>
-                        @for (var i = 0; i < 10; i++)
-                        {
-                            var i_ = i;
-                            <MudSelectItem Value="@i_.ToString()">
-                                @i_
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
-
-                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.ContainedLevers" Label="Contained levers" MultiSelection>
-                        @for (var i = 0; i < 10; i++)
-                        {
-                            var i_ = i;
-                            <MudSelectItem Value="@i_.ToString()">
-                                @i_
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
-
-                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverRequirements" Label="Lever requirements" MultiSelection>
-                        @for (var i = 0; i < 10; i++)
-                        {
-                            var i_ = i;
-                            <MudSelectItem Value="@i_.ToString()">
-                                @i_
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
-
-                    <MudSelect T="string" @bind-SelectedValues="CurrentNode.LeverKeyRequirements" Label="Lever key requirements" MultiSelection>
-                        @for (var i = 0; i < 10; i++)
-                        {
-                            var i_ = i;
-                            <MudSelectItem Value="@i_.ToString()">
-                                @i_
-                            </MudSelectItem>
-                        }
-                    </MudSelect>
+                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsLongInsertionPoint" Label="Is long insertion point?" />
                 }
+                <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSecret" Label="Is secret?" />
+                <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSightLineOnly" Label="Is sight line only?" />
+                <MudCheckBox T="bool" @bind-Value="CurrentArc.IsDangerous" Label="Is dangerous?" />
+                <MudNumericField T="int?" @bind-Value="CurrentArc.Theme" Label="Theme" />
             }
+        }
+    </MudStack>
+    <MudStack StretchItems="StretchItems.End">
+        <MudButtonGroup Variant="Variant.Outlined">
+            <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
+            <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
+            <!-- Load Template Button -->
+            <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+                <ActivatorContent>
+                    <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
+                        Load
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
 
-        </MudStack>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
+        </MudButtonGroup>
 
-        <MudStack>
-            <MudText Typo="Typo.h6">Arcs</MudText>
-            @if (CurrentCycle is not null)
+        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+            @if (!string.IsNullOrWhiteSpace(text))
             {
-                <MudChipSet T="CycleArc"
-                            CheckMark
-                            SelectedValue="CurrentArc"
-                            SelectedValueChanged="OnSelectedCycleArcChanged"
-                            SelectionMode="SelectionMode.SingleSelection"
-                            Class="tile-selector">
-                    @foreach (var arc in CurrentCycle.Arcs)
-                    {
-                        var a = arc;
-                        <MudChip T="CycleArc"
-                                 Value="@a"
-                                 Text="@($"{a.From?.Name ?? "None"} - {a.To?.Name ?? "None"}")"
-                                 Color="Color.Default"
-                                 OnClose="() => RemoveCycleArc(a)"
-                                 CloseIcon="@Icons.Material.Outlined.Close"
-                                 Variant="Variant.Outlined"
-                                 Class="tile-selector-chip">
-                        </MudChip>
-                    }
-                </MudChipSet>
-
-                <MudChip T="string"
-                         Icon="@Icons.Material.Outlined.Add"
-                         Color="Color.Success"
-                         Variant="Variant.Outlined"
-                         OnClick="AddCycleArc"
-                         Class="mud-chip-margin">
-                    Add Arc
-                </MudChip>
-
-                <MudText Typo="Typo.h6">Active Arc</MudText>
-                @if (CurrentArc is not null)
-                {
-                    <MudSelect Value="CurrentArc.From" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcFromChanged" T="CycleNode">
-                        @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.To))
-                        {
-                            var n = node;
-                            <MudSelectItem T="CycleNode" Value="n" DisplayString="@n.Name"> @n.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudSelect Value="CurrentArc.To" ToStringFunc="@(n => n.Name)" ValueChanged="OnCurrentArcToChanged" T="CycleNode">
-                        @foreach (var node in CurrentCycle.Nodes.Where(n => n != CurrentArc.From))
-                        {
-                            var n = node;
-                            <MudSelectItem T="CycleNode" Value="n">@n.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                    <MudCheckBox T="bool" Value="CurrentArc.IsOneWay" ValueChanged="OnCurrentArcIsOneWayChanged" Label="Is one way?" />
-                    <MudCheckBox T="bool" Value="CurrentArc.InsertionPoint" ValueChanged="OnCurrentArcInsertionPointChanged" Label="Is insertion point?" />
-                    @if (CurrentArc.InsertionPoint)
-                    {
-                        <MudCheckBox T="bool" @bind-Value="CurrentArc.IsLongInsertionPoint" Label="Is long insertion point?" />
-                    }
-                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSecret" Label="Is secret?" />
-                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsSightLineOnly" Label="Is sight line only?" />
-                    <MudCheckBox T="bool" @bind-Value="CurrentArc.IsDangerous" Label="Is dangerous?" />
-                    <MudNumericField T="int?" @bind-Value="CurrentArc.Theme" Label="Theme" />
-                }
+                <MermaidDiagram Definition="@text" />
             }
-        </MudStack>
-        <MudStack StretchItems="StretchItems.End">
-            <MudButtonGroup Variant="Variant.Outlined">
-                <MudButton StartIcon="@Icons.Material.Outlined.Save" OnClick="SaveTemplate">Save</MudButton>
-                <MudButton StartIcon="@Icons.Material.Outlined.Download" OnClick="DownloadTemplate">Download</MudButton>
-                <!-- Load Template Button -->
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
-                    <ActivatorContent>
-                        <MudButton StartIcon="@Icons.Material.Outlined.CloudUpload">
-                            Load
-                        </MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>
-
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.Preview" OnClick="PreviewTemplate">Preview</MudButton>
-            </MudButtonGroup>
-
-            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
-                @if (!string.IsNullOrWhiteSpace(text))
-                {
-                    <MermaidDiagram Definition="@text" />
-                }
-            </MudStack>
         </MudStack>
     </MudStack>
-</MudMainContent>
+</MudStack>
+
 @code {
     private string text = "graph LR";
     private List<Cycle> Cycles { get; set; } = [];
@@ -424,8 +423,9 @@
     {
         using var stream = file.OpenReadStream();
         using var streamReader = new StreamReader(stream);
-        Cycles = JsonSerializer.Deserialize<List<Cycle>>(await streamReader.ReadToEndAsync(), new JsonSerializerOptions{
-            AllowTrailingCommas = true
-        });
+        Cycles = JsonSerializer.Deserialize<List<Cycle>>(await streamReader.ReadToEndAsync(), new JsonSerializerOptions
+            {
+                AllowTrailingCommas = true
+            });
     }
 }

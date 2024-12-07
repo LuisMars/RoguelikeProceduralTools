@@ -1,7 +1,99 @@
 ﻿@page "/"
 
-<h3>Home</h3>
-
-@code {
-
-}
+<MudStack Row="false" Spacing="3" AlignItems="AlignItems.Center" Style="max-width: 1200px; justify-self: center" Class="mt-10">
+    <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">Roguelike Procedural Tools</MudText>
+    <MudStack Spacing="5" Class="pa-5">
+        <MudText>
+            <p>
+                Hi, I'm <strong>Luis Mars</strong>, a software developer with a passion for game development, which I love exploring in my spare time.
+            </p>
+            <p>
+                I enjoy solving complex problems, creating efficient tools, and designing systems that streamline the development process while making it more enjoyable.
+            </p>
+            <p>
+                Currently, I'm working on <strong>Fragments of Eniriel</strong>, a roguelike game featuring pixel art, procedurally generated dungeons, and innovative mechanics to captivate players.
+            </p>
+            <br />
+            <p>
+                This page is a hub for tools and resources I've developed to assist with roguelike game creation, including:
+            </p>
+        </MudText>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h5" Align="Align.Center">
+                            Rule Replacement Tool
+                        </MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>
+                            <p>
+                                This tool allows you to design and manage procedural replacement rules by creating two distinct grids with tiles of your choice.
+                            </p>
+                            <p>
+                                The first grid acts as the reference template, where specific tile patterns or arrangements are identified.
+                            </p>
+                            <p>
+                                The second grid specifies the replacement configuration, defining what the corresponding tiles or patterns in the reference grid
+                                should be replaced with during procedural generation. The tool supports advanced customization features, including rotation and mirroring
+                                of tile patterns, enabling you to create varied and intricate replacement rules. Once your rules are configured,
+                                they can be exported as a JSON file, ready for integration into your game’s procedural systems. This makes it a versatile tool for developers looking
+                                to streamline and enhance their level design workflows.
+                            </p>
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="/rules" StartIcon="@Icons.Material.Outlined.Code" Variant="Variant.Outlined" Color="Color.Primary">
+                            Try It Now
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="6">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h5" Align="Align.Center">
+                            Cyclic Dungeon Generator
+                        </MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>
+                            <p>
+                                This tool allows you to generate intricate dungeon layouts featuring cyclic paths inspired by the techniques used in
+                                <MudLink Href="https://www.boristhebrave.com/2021/04/10/dungeon-generation-in-unexplored/" Target="_blank" Color="Color.Secondary">
+                                    Unexplored.
+                                </MudLink>
+                            </p>
+                            <p>
+                                It provides an intuitive interface for creating cycles, a key feature that enhances replayability and spatial complexity in dungeons.
+                            </p>
+                            <p>
+                                The tool includes a live preview feature that uses Mermaid diagrams to visually represent the generated cyclic paths,
+                                making it easy to tweak and refine your layouts. Once satisfied, the generated data can be exported as a JSON file,
+                                seamlessly integrating into your game development pipeline.
+                            </p>
+                            <p>
+                                Whether you're looking to create branching paths, loops, or intricate networks, this tool offers a powerful and
+                                user-friendly way to design dynamic and engaging dungeon structures.
+                            </p>
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Href="/cycles" StartIcon="@Icons.Material.Outlined.Code" Variant="Variant.Outlined" Color="Color.Primary">
+                            Try It Now
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudStack>
+    <MudStack AlignItems="AlignItems.Center" Spacing="5">
+        Follow me:
+        <MudButtonGroup>
+            <MudButton Href="https://github.com/luismars" StartIcon="@Icons.Custom.Brands.GitHub" Target="_blank" Class="px-5">GitHub</MudButton>
+            <MudButton Href="https://luismars.itch.io/" StartIcon="@Icons.Material.Outlined.Gamepad" Target="_blank" Class="px-5">Itch.io</MudButton>
+            <MudButton Href="https://bsky.app/profile/luismars.bsky.social" StartIcon="@Icons.Material.Outlined.Cloud" Target="_blank" Class="px-5">Bluesky</MudButton>
+        </MudButtonGroup>
+    </MudStack>
+</MudStack>
